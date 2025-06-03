@@ -1,7 +1,7 @@
 export default {
   providers: [
     {
-      domain: "https://slackz-seven.vercel.app",
+      domain: process.env.CONVEX_SITE_URL,
       applicationID: "convex",
     },
   ],
