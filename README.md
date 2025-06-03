@@ -1,6 +1,6 @@
-# Slack Clone
+# Slackz
 
-This is a Slack clone, built with [Next.js](https://nextjs.org/), [shadcn/ui](https://ui.shadcn.com/) component library, [convex](https://www.convex.dev/) database and auth, following this [tutorial](https://www.youtube.com/watch?v=lXITA5MZIiI) by [Code with Antonio](https://www.youtube.com/@codewithantonio).
+This is a Slack clone, built with [Next.js](https://nextjs.org/), [shadcn/ui](https://ui.shadcn.com/) component library, [convex](https://www.convex.dev/) database and auth.
 
 The application is deployed on Vercel [here](https://slack-clone-green-omega.vercel.app/).
 
