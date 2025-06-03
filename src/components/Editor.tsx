@@ -19,6 +19,9 @@ import Image from "next/image";
 import { EmojiPopover } from "./EmojiPopover";
 import { Hint } from "./Hint";
 import { Button } from "./ui/button";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
 
 type EditorValue = {
   image: File | null;
@@ -35,6 +38,11 @@ interface EditorProps {
   onSubmit: ({ image, body }: EditorValue) => void;
 }
 
+function capitalizeFirst(str: string) {
+  if (!str) return "";
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 const Editor = ({
   variant = "create",
   defaultValue = [],
@@ -46,6 +54,11 @@ const Editor = ({
 }: EditorProps) => {
   const [image, setImage] = useState<File | null>(null);
   const [text, setText] = useState("");
+  const [tone, setTone] = useState<string | null>(null);
+  const [loadingTone, setLoadingTone] = useState(false);
+
+  const toneTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const isEmpty = useMemo(
     () => !image && text.replace("/s*/g", "").trim().length === 0,
     [text, image]
@@ -66,6 +79,70 @@ const Editor = ({
     defaultValueRef.current = defaultValue;
     disabledRef.current = disabled;
   });
+
+  useEffect(() => {
+    if (toneTimeoutRef.current) {
+      clearTimeout(toneTimeoutRef.current);
+    }
+
+    if (text.trim().length === 0) {
+      setTone(null);
+      return;
+    }
+
+    toneTimeoutRef.current = setTimeout(async () => {
+      setLoadingTone(true);
+      try {
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
+
+        const systemPrompt = `
+            You are a Tone & Impact Analyzer. 
+            Given the user’s draft message, classify its tone as one of: "aggressive", "weak", "confusing", "neutral", or "friendly".
+            Then classify its impact as one of: "low-impact", "medium-impact", or "high-impact".
+            Return ONLY this JSON:
+            { "tone": "<tone>", "impact": "<impact>" }
+                    `.trim();
+
+        const userPrompt = `Message: """${text.trim()}"""`;
+
+        const prompt = `${systemPrompt}\n\n${userPrompt}`
+
+        // Call Gemini Flash 2 (text‐completion endpoint)
+        const result = await model.generateContent(prompt);
+
+        // The returned text might include leading/trailing whitespace
+        // const raw = result.response.text().trim();
+        let raw = result.response.text();
+        raw = raw.replace(/```json\s*/, "").replace(/```/g, "").trim();
+        console.log('raw:', raw)
+
+        let parsed: { tone: string; impact: string } | null = null;
+        try {
+          parsed = JSON.parse(raw);
+          console.log('parsed:', parsed)
+        } catch {
+          console.warn("Tone analysis returned invalid JSON:", raw);
+        }
+
+        if (parsed && parsed.tone && parsed.impact) {
+          setTone(`${capitalizeFirst(parsed.tone)}, ${capitalizeFirst(parsed.impact)}`);
+        } else {
+          setTone(null);
+        }
+      } catch (err) {
+        console.error("Error fetching tone analysis:", err);
+        setTone(null);
+      } finally {
+        setLoadingTone(false);
+      }
+    }, 500);
+
+    return () => {
+      if (toneTimeoutRef.current) {
+        clearTimeout(toneTimeoutRef.current);
+      }
+    };
+  }, [text]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -104,7 +181,7 @@ const Editor = ({
                 if (isEmpty) return;
 
                 const body = JSON.stringify(quill.getContents());
-
+                
                 onSubmitRef.current?.({ body, image: addedImage });
               },
             },
@@ -280,6 +357,18 @@ const Editor = ({
           )}
         </div>
       </div>
+
+        <div className="mt-2 flex flex-col items-start px-2">
+          {loadingTone && (
+            <p className="text-xs text-gray-500 italic">Checking tone…</p>
+          )}
+          {!loadingTone && tone && (
+            <p className="text-xs">
+              <strong>✨Tone & Impact: </strong> {tone}
+            </p>
+          )}
+        </div>
+
       {variant === "create" && (
         <div
           className={cn(
