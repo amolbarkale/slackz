@@ -36,7 +36,7 @@ interface EditorProps {
   placeholder?: string;
   onCancel?: () => void;
   onSubmit: ({ image, body }: EditorValue) => void;
-  onSuggestReply?: () => void;
+  onSuggestReply?: () => Promise<string[]>;
   showSuggestReply?: boolean;
 }
 
@@ -86,69 +86,67 @@ const Editor = ({
     disabledRef.current = disabled;
   });
 
-  useEffect(() => {
-    if (toneTimeoutRef.current) {
-      clearTimeout(toneTimeoutRef.current);
-    }
+  // TODO: need to uncomment it once we done with testing of auto suggestion.
+  // useEffect(() => {
+  //   if (toneTimeoutRef.current) {
+  //     clearTimeout(toneTimeoutRef.current);
+  //   }
 
-    if (text.trim().length === 0) {
-      setTone(null);
-      return;
-    }
+  //   if (text.trim().length === 0) {
+  //     setTone(null);
+  //     return;
+  //   }
 
-    toneTimeoutRef.current = setTimeout(async () => {
-      setLoadingTone(true);
-      try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
+  //   toneTimeoutRef.current = setTimeout(async () => {
+  //     setLoadingTone(true);
+  //     try {
+  //       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
 
-        const systemPrompt = `
-            You are a Tone & Impact Analyzer. 
-            Given the user's draft message, classify its tone as one of: "aggressive", "weak", "confusing", "neutral", or "friendly".
-            Then classify its impact as one of: "low-impact", "medium-impact", or "high-impact".
-            Return ONLY this JSON:
-            { "tone": "<tone>", "impact": "<impact>" }
-                    `.trim();
+  //       const systemPrompt = `
+  //           You are a Tone & Impact Analyzer. 
+  //           Given the user's draft message, classify its tone as one of: "aggressive", "weak", "confusing", "neutral", or "friendly".
+  //           Then classify its impact as one of: "low-impact", "medium-impact", or "high-impact".
+  //           Return ONLY this JSON:
+  //           { "tone": "<tone>", "impact": "<impact>" }
+  //                   `.trim();
 
-        const userPrompt = `Message: """${text.trim()}"""`;
+  //       const userPrompt = `Message: """${text.trim()}"""`;
 
-        const prompt = `${systemPrompt}\n\n${userPrompt}`
+  //       const prompt = `${systemPrompt}\n\n${userPrompt}`
 
-        // Call Gemini Flash 2 (text‐completion endpoint)
-        const result = await model.generateContent(prompt);
+  //       const result = await model.generateContent(prompt);
 
-        // The returned text might include leading/trailing whitespace
-        // const raw = result.response.text().trim();
-        let raw = result.response.text();
-        raw = raw.replace(/```json\s*/, "").replace(/```/g, "").trim();
-        console.log('raw:', raw)
+  //       let raw = result.response.text();
+  //       raw = raw.replace(/```json\s*/, "").replace(/```/g, "").trim();
+  //       console.log('raw:', raw)
 
-        let parsed: { tone: string; impact: string } | null = null;
-        try {
-          parsed = JSON.parse(raw);
-          console.log('parsed:', parsed)
-        } catch {
-          console.warn("Tone analysis returned invalid JSON:", raw);
-        }
+  //       let parsed: { tone: string; impact: string } | null = null;
+  //       try {
+  //         parsed = JSON.parse(raw);
+  //         console.log('parsed:', parsed)
+  //       } catch {
+  //         console.warn("Tone analysis returned invalid JSON:", raw);
+  //       }
 
-        if (parsed && parsed.tone && parsed.impact) {
-          setTone(`${capitalizeFirst(parsed.tone)}, ${capitalizeFirst(parsed.impact)}`);
-        } else {
-          setTone(null);
-        }
-      } catch (err) {
-        console.error("Error fetching tone analysis:", err);
-        setTone(null);
-      } finally {
-        setLoadingTone(false);
-      }
-    }, 500);
+  //       if (parsed && parsed.tone && parsed.impact) {
+  //         setTone(`${capitalizeFirst(parsed.tone)}, ${capitalizeFirst(parsed.impact)}`);
+  //       } else {
+  //         setTone(null);
+  //       }
+  //     } catch (err) {
+  //       console.error("Error fetching tone analysis:", err);
+  //       setTone(null);
+  //     } finally {
+  //       setLoadingTone(false);
+  //     }
+  //   }, 500);
 
-    return () => {
-      if (toneTimeoutRef.current) {
-        clearTimeout(toneTimeoutRef.current);
-      }
-    };
-  }, [text]);
+  //   return () => {
+  //     if (toneTimeoutRef.current) {
+  //       clearTimeout(toneTimeoutRef.current);
+  //     }
+  //   };
+  // }, [text]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -251,7 +249,8 @@ const Editor = ({
     
     setLoadingSuggestion(true);
     try {
-      await onSuggestReply();
+      const suggestions = await onSuggestReply();
+      setSuggestions(suggestions || []);
     } catch (error) {
       console.error("Error getting AI suggestions:", error);
     } finally {
@@ -282,28 +281,38 @@ const Editor = ({
       
       {/* AI Suggestions Panel */}
       {suggestions.length > 0 && (
-        <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-          <div className="flex items-center gap-2 mb-2">
-            <Bot className="size-4 text-blue-600" />
-            <span className="text-sm font-medium text-blue-800">AI Suggestions</span>
+        <div className="mb-3 p-4 bg-slate-50 border border-slate-200 rounded-lg shadow-sm">
+          <div className="flex items-center gap-2 mb-3">
+            <Bot className="size-4 text-[#007a5a]" />
+            <span className="text-sm font-semibold text-slate-800">AI Reply Suggestions</span>
+            <button
+              onClick={() => setSuggestions([])}
+              className="ml-auto text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              <XIcon className="size-4" />
+            </button>
           </div>
           <div className="space-y-2">
             {suggestions.map((suggestion, index) => (
               <button
                 key={index}
                 onClick={() => insertSuggestion(suggestion)}
-                className="w-full text-left p-2 text-sm bg-white border border-blue-200 rounded hover:bg-blue-50 transition-colors"
+                className="w-full text-left p-3 text-sm bg-white border border-slate-200 rounded-md hover:border-[#007a5a] hover:bg-[#007a5a]/5 transition-all duration-200 group"
               >
-                {suggestion}
+                <div className="flex items-start gap-2">
+                  <span className="flex-shrink-0 w-5 h-5 bg-[#007a5a]/10 text-[#007a5a] rounded-full flex items-center justify-center text-xs font-medium group-hover:bg-[#007a5a] group-hover:text-white transition-colors">
+                    {index + 1}
+                  </span>
+                  <span className="text-slate-700 group-hover:text-slate-900 leading-relaxed">
+                    {suggestion}
+                  </span>
+                </div>
               </button>
             ))}
           </div>
-          <button
-            onClick={() => setSuggestions([])}
-            className="mt-2 text-xs text-blue-600 hover:text-blue-800"
-          >
-            Dismiss suggestions
-          </button>
+          <div className="mt-3 text-xs text-slate-500 text-center">
+            Click on a suggestion to insert it into your message
+          </div>
         </div>
       )}
 

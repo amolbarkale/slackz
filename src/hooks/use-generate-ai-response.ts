@@ -3,42 +3,43 @@ import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 
-interface UseGenerateAIResponseProps {
+interface UseGenerateAISuggestionsProps {
   workspaceId: Id<"workspaces">;
   channelId?: Id<"channels">;
   conversationId?: Id<"conversations">;
   parentMessageId?: Id<"messages">;
 }
 
-export const useGenerateAIResponse = ({
+export const useGenerateAISuggestions = ({
   workspaceId,
   channelId,
   conversationId,
   parentMessageId,
-}: UseGenerateAIResponseProps) => {
+}: UseGenerateAISuggestionsProps) => {
   const [isPending, setIsPending] = useState(false);
   
-  const generateAIResponse = useAction(api.ai.generateAIResponse);
+  const generateAISuggestions = useAction(api.ai.generateAISuggestions);
 
   const mutate = useCallback(
-    async (contextMessageId: Id<"messages">) => {
+    async (contextMessageId: Id<"messages">): Promise<string[]> => {
       setIsPending(true);
       try {
-        await generateAIResponse({
+        const suggestions = await generateAISuggestions({
           workspaceId,
           channelId,
           conversationId,
           parentMessageId,
           contextMessageId,
         });
+        return suggestions;
       } catch (error) {
-        console.error("Failed to generate AI response:", error);
+        console.error("Failed to generate AI suggestions:", error);
         throw error;
       } finally {
         setIsPending(false);
       }
     },
-    [generateAIResponse, workspaceId, channelId, conversationId, parentMessageId]
+    [generateAISuggestions, workspaceId, channelId, conversationId, parentMessageId]
   );
 
   return { mutate, isPending };

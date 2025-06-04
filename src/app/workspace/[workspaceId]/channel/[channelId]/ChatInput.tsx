@@ -86,27 +86,20 @@ export const ChatInput = ({ placeholder }: ChatInputProps) => {
   };
 
   const handleSuggestReply = async () => {
+    if (!getMessages.results.length) return [];
+    
+    const lastMessage = getMessages.results[0];
+    
     try {
-      // Get the most recent message to respond to
-      const recentMessages = getMessages.results;
-      if (recentMessages.length === 0) {
-        toast.error("No messages to respond to");
-        return;
-      }
-
-      const lastMessage = recentMessages[0];
-      
-      // Generate AI response using the existing mutation
-      await generateAIResponse.mutateAsync({
+      const result = await generateAIResponse.mutateAsync({
         workspaceId,
         channelId,
         contextMessageId: lastMessage._id,
       });
-
-      toast.success("AI suggestion generated!");
+      return result || [];
     } catch (error) {
-      console.error("Error generating AI suggestion:", error);
-      toast.error("Failed to generate AI suggestion");
+      console.error("Error generating AI suggestions:", error);
+      return [];
     }
   };
 
