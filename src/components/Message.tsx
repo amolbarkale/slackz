@@ -1,6 +1,8 @@
 import dayjs, { Dayjs } from "dayjs";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
+import { useState } from "react";
+import { useConvex } from "convex/react";
 
 import { useRemoveMessage } from "@/features/messages/api/useRemoveMessage";
 import { useUpdateMessage } from "@/features/messages/api/useUpdateMessage";
@@ -47,6 +49,7 @@ interface MessageProps {
   threadName?: string;
   setEditingId: (id: Id<"messages"> | null) => void;
   conversationId?: Id<"conversations">;
+  channelId?: Id<"channels">;
 }
 
 const formatFullTime = (date: Dayjs) => {
@@ -75,6 +78,7 @@ export const Message = ({
   isAuthor,
   setEditingId,
   conversationId,
+  channelId: propChannelId,
 }: MessageProps) => {
   const {
     parentMessageId,
@@ -88,7 +92,9 @@ export const Message = ({
   );
   
   const workspaceId = useWorkspaceId();
-  const channelId = useChannelId();
+  const hookChannelId = useChannelId();
+  const channelId = propChannelId || hookChannelId; // Use prop if available, otherwise hook
+  const convex = useConvex();
   
   const updateMessage = useUpdateMessage();
   const removeMessage = useRemoveMessage();

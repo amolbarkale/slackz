@@ -42,6 +42,7 @@ const ChannelPage = () => {
         loadMore={getMessages.loadMore}
         isLoadingMore={getMessages.status === "LoadingMore"}
         canLoadMore={getMessages.status === "CanLoadMore"}
+        channelId={channelId}
       />
       <ChatInput placeholder={`Message # ${getChannel.data.name}`} />
     </div>

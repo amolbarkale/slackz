@@ -55,6 +55,18 @@ const schema = defineSchema({
     .index("by_workspace_id", ["workspaceId"])
     .index("by_message_id", ["messageId"])
     .index("by_member_id", ["memberId"]),
+  summaries: defineTable({
+    workspaceId: v.id("workspaces"),
+    contextType: v.union(v.literal("thread"), v.literal("channel"), v.literal("conversation")),
+    contextId: v.string(), // threadId, channelId, or conversationId
+    summary: v.string(),
+    messageCount: v.number(),
+    participantCount: v.number(),
+    generatedBy: v.id("members"),
+    generatedAt: v.number(),
+  })
+    .index("by_workspace_id", ["workspaceId"])
+    .index("by_context", ["workspaceId", "contextType", "contextId"]),
 });
 
 export default schema;

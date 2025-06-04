@@ -1,4 +1,4 @@
-import { MessageSquareTextIcon, Pencil, Smile, Trash, Bot } from "lucide-react";
+import { MessageSquareTextIcon, Pencil, Smile, Trash, Bot, FileText } from "lucide-react";
 
 import { Button } from "./ui/button";
 import { Hint } from "./Hint";
@@ -13,6 +13,7 @@ interface ToolbarProps {
   onDelete: () => void;
   onReaction: (value: string) => void;
   onAIResponse?: () => void;
+  onCreateSummary?: () => void;
 }
 
 export const Toolbar = ({
@@ -24,6 +25,7 @@ export const Toolbar = ({
   onReaction,
   onThread,
   onAIResponse,
+  onCreateSummary,
 }: ToolbarProps) => {
   return (
     <div className="absolute top-0 right-5">
@@ -46,6 +48,19 @@ export const Toolbar = ({
               className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
             >
               <Bot className="size-4" />
+            </Button>
+          </Hint>
+        )}
+        {onCreateSummary && (
+          <Hint label="Create AI Summary">
+            <Button
+              size="icon"
+              variant="ghost"
+              disabled={isPending}
+              onClick={onCreateSummary}
+              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+            >
+              <FileText className="size-4" />
             </Button>
           </Hint>
         )}

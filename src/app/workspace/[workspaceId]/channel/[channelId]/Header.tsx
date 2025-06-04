@@ -1,8 +1,9 @@
-import { TrashIcon } from "lucide-react";
+import { TrashIcon, FileText } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { FaChevronDown } from "react-icons/fa";
 import { toast } from "sonner";
+import { useConvex } from "convex/react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +22,8 @@ import { useCurrentMember } from "@/features/members/api/useCurrentMember";
 import { useChannelId } from "@/hooks/useChannelId";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
+import { generateChannelSummary } from "@/lib/ai-summary";
+import { AISummaryModal } from "@/components/AISummaryModal";
 
 interface HeaderProps {
   title: string;
@@ -30,12 +33,14 @@ export const Header = ({ title }: HeaderProps) => {
   const router = useRouter();
   const channelId = useChannelId();
   const workspaceId = useWorkspaceId();
+  const convex = useConvex();
   const currentMember = useCurrentMember({
     workspaceId,
   });
 
   const [name, setName] = useState("");
   const [editOpen, setEditOpen] = useState(false);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
   const [ConfirmDialog, confirm] = useConfirm(
     "Delete this channel?",
     "You are about to delete this channel. This action is irreversible"
@@ -92,6 +97,11 @@ export const Header = ({ title }: HeaderProps) => {
         console.error(error);
         toast.error("Failed to remove channel");
       });
+  };
+
+  // Handle summary generation
+  const handleCreateSummary = async (): Promise<string> => {
+    return await generateChannelSummary(convex, workspaceId, channelId);
   };
 
   return (
@@ -170,7 +180,25 @@ export const Header = ({ title }: HeaderProps) => {
             </div>
           </DialogContent>
         </Dialog>
+        
+        {/* AI Summary Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className="ml-auto"
+          onClick={() => setIsSummaryModalOpen(true)}
+        >
+          <FileText className="size-4 mr-2" />
+          AI Summary
+        </Button>
       </div>
+      
+      <AISummaryModal
+        isOpen={isSummaryModalOpen}
+        onClose={() => setIsSummaryModalOpen(false)}
+        onGenerate={handleCreateSummary}
+        title="Channel Summary"
+      />
     </>
   );
 };

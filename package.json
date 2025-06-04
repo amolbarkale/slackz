@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "test:tone": "node tests/test-tone-checker.js",
-    "test:suggestions": "node tests/test-ai-suggestions.js"
+    "test:suggestions": "node tests/test-ai-suggestions.js",
+    "test:summery": "node tests/test-summary.js"
   },
   "dependencies": {
     "@auth/core": "^0.37.0",

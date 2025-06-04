@@ -9,7 +9,6 @@ import { Message } from "@/components/Message";
 import { Button } from "@/components/ui/button";
 import { useCurrentMember } from "@/features/members/api/useCurrentMember";
 import { useGenerateUploadUrl } from "@/features/upload/api/useGenerateUploadUrl";
-import { useChannelId } from "@/hooks/useChannelId";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
 import { api } from "../../../../convex/_generated/api";
 import { Id } from "../../../../convex/_generated/dataModel";
@@ -43,8 +42,11 @@ const formatDateLabel = (dateStr: string) => {
 
 export const Thread = ({ messageId, onClose }: ThreadProps) => {
   const workspaceId = useWorkspaceId();
-  const channelId = useChannelId();
   const getMessage = useGetMessage({ id: messageId });
+  
+  // Get channelId from the message data instead of URL params
+  const channelId = getMessage.data?.channelId;
+  
   const getMessages = useGetMessages({
     channelId,
     parentMessageId: messageId,
@@ -82,6 +84,10 @@ export const Thread = ({ messageId, onClose }: ThreadProps) => {
     try {
       setIsPending(true);
       editorRef.current?.enable(false);
+
+      if (!channelId) {
+        throw new Error("Channel ID is required");
+      }
 
       const values: CreateMessageValues = {
         body,
@@ -199,6 +205,7 @@ export const Thread = ({ messageId, onClose }: ThreadProps) => {
                   hideThreadButton
                   isAuthor={currentMember.data?._id === message.memberId}
                   conversationId={getMessage.data?.conversationId}
+                  channelId={channelId}
                 />
               );
             })}
@@ -249,6 +256,7 @@ export const Thread = ({ messageId, onClose }: ThreadProps) => {
           hideThreadButton
           isAuthor={currentMember.data?._id === getMessage.data.memberId}
           conversationId={getMessage.data.conversationId}
+          channelId={channelId}
         />
       </div>
       <div className="px-4">
