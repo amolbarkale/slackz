@@ -3,9 +3,7 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 
 import { Doc, Id } from "./_generated/dataModel";
-import { mutation, query, QueryCtx } from "./_generated/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
+import { mutation, query, QueryCtx, internalQuery, internalMutation } from "./_generated/server";
 
 const populateThread = async (ctx: QueryCtx, messageId: Id<"messages">) => {
   const messages = await ctx.db
@@ -365,27 +363,15 @@ export const create = mutation({
   },
 });
 
-export const generateAIResponse = mutation({
+// Internal query to get conversation context (for actions)
+export const getConversationContext = internalQuery({
   args: {
-    workspaceId: v.id("workspaces"),
     channelId: v.optional(v.id("channels")),
     conversationId: v.optional(v.id("conversations")),
     parentMessageId: v.optional(v.id("messages")),
-    contextMessageId: v.id("messages"), // The message to respond to
+    contextMessageId: v.id("messages"),
   },
   handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-
-    if (!userId) {
-      throw new Error("Unauthorized");
-    }
-
-    const member = await getMember(ctx, args.workspaceId, userId);
-
-    if (!member) {
-      throw new Error("Unauthorized");
-    }
-
     // Get conversation context (last 10 messages)
     const contextMessages = await ctx.db
       .query("messages")
@@ -421,56 +407,62 @@ export const generateAIResponse = mutation({
     const targetMember = await populateMember(ctx, targetMessage.memberId);
     const targetUser = targetMember ? await populateUser(ctx, targetMember.userId) : null;
 
-    try {
-      const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
+    return {
+      conversationContext,
+      targetMessage,
+      targetUser,
+    };
+  },
+});
 
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
-
-      const prompt = `You are a helpful AI assistant in a Slack-like workspace chat. 
-      
-Context of recent conversation:
-${conversationContext.map(msg => `${msg.author}: ${msg.content}`).join('\n')}
-
-The user ${targetUser?.name || "Unknown"} just said: "${targetMessage.body}"
-
-Please provide a helpful, concise, and contextually appropriate response. Keep it conversational and professional. If the message is a question, try to answer it. If it's a statement, provide a thoughtful response or ask a follow-up question.`;
-
-      const result = await model.generateContent(prompt);
-      const aiResponse = result.response.text();
-
-      // Create AI response message
-      let _conversationId = args.conversationId;
-
-      if (!args.conversationId && !args.channelId && args.parentMessageId) {
-        const parentMessage = await ctx.db.get(args.parentMessageId);
-        if (!parentMessage) {
-          throw new Error("Parent message not found");
-        }
-        _conversationId = parentMessage.conversationId;
-      }
-
-      const messageId = await ctx.db.insert("messages", {
-        memberId: member._id,
-        body: JSON.stringify([
-          {
-            type: "paragraph",
-            children: [
-              {
-                text: `🤖 AI Response: ${aiResponse}`,
-              },
-            ],
-          },
-        ]),
-        channelId: args.channelId,
-        workspaceId: args.workspaceId,
-        parentMessageId: args.parentMessageId,
-        conversationId: _conversationId,
-      });
-
-      return messageId;
-    } catch (error) {
-      console.error("AI Response Error:", error);
-      throw new Error("Failed to generate AI response");
+// Internal mutation to create AI message (for actions)
+export const createAIMessage = internalMutation({
+  args: {
+    aiResponse: v.string(),
+    workspaceId: v.id("workspaces"),
+    channelId: v.optional(v.id("channels")),
+    conversationId: v.optional(v.id("conversations")),
+    parentMessageId: v.optional(v.id("messages")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) {
+      throw new Error("Unauthorized");
     }
+
+    const member = await getMember(ctx, args.workspaceId, userId);
+    if (!member) {
+      throw new Error("Unauthorized");
+    }
+
+    let _conversationId = args.conversationId;
+
+    if (!args.conversationId && !args.channelId && args.parentMessageId) {
+      const parentMessage = await ctx.db.get(args.parentMessageId);
+      if (!parentMessage) {
+        throw new Error("Parent message not found");
+      }
+      _conversationId = parentMessage.conversationId;
+    }
+
+    const messageId = await ctx.db.insert("messages", {
+      memberId: member._id,
+      body: JSON.stringify([
+        {
+          type: "paragraph",
+          children: [
+            {
+              text: `🤖 AI Response: ${args.aiResponse}`,
+            },
+          ],
+        },
+      ]),
+      channelId: args.channelId,
+      workspaceId: args.workspaceId,
+      parentMessageId: args.parentMessageId,
+      conversationId: _conversationId,
+    });
+
+    return messageId;
   },
 });

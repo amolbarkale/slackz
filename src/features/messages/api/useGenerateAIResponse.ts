@@ -1,13 +1,13 @@
 import { useMutation as useReactQueryMutation } from "@tanstack/react-query";
-import { useMutation as useConvexMutation } from "convex/react";
+import { useAction } from "convex/react";
 
 import { api } from "../../../../convex/_generated/api";
 
 export const useGenerateAIResponse = () => {
-  const mutation = useConvexMutation(api.messages.generateAIResponse);
+  const action = useAction(api.ai.generateAIResponse);
 
   const generateAIResponse = useReactQueryMutation({
-    mutationFn: mutation,
+    mutationFn: action,
   });
 
   return generateAIResponse;
