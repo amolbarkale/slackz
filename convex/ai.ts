@@ -50,15 +50,13 @@ Return ONLY a JSON array of 3 strings, no other text:
 
       const result = await model.generateContent(prompt);
       let aiResponse = result.response.text().trim();
-      console.log('aiResponse:', aiResponse)
       
       // Clean up the response to extract JSON
       aiResponse = aiResponse.replace(/```json\s*/, "").replace(/```/g, "").trim();
-      console.log('aiResponse:', aiResponse)
+      console.log('suggestions:', aiResponse)
       
       try {
         const suggestions = JSON.parse(aiResponse);
-        console.log('suggestions:', suggestions)
         if (Array.isArray(suggestions) && suggestions.length === 3) {
           return suggestions;
         } else {
