@@ -72,27 +72,53 @@
 - [ ] Add rate limiting middleware for AI endpoints
 - [ ] Create `aiLogs` collection in Convex for monitoring
 
-### 3.2. Org Brain Plugin Implementation
-- [ ] **Backend API Development**
-  - [ ] Create `/api/ai/orgBrain` Next.js API route
-  - [ ] Implement `getWorkspaceData()` Convex function
-  - [ ] Build context assembly logic (messages + pinned docs)
-  - [ ] Create prompt template for workspace queries
-  - [ ] Add smart context prioritization (recent messages, keywords)
-  - [ ] Implement caching mechanism (30-minute TTL)
-  
-- [ ] **Frontend UI Development**
-  - [ ] Add "Ask Org Brain" button to sidebar
-  - [ ] Create Org Brain modal with input field
-  - [ ] Implement loading states and error handling
-  - [ ] Add response display with markdown support
-  - [ ] Include source attribution (channel names)
+### 3.2. AI Thread/Channel Summary Implementation (TinyLlama + Ollama)
+- [ ] **Local AI Setup**
+  - [ ] Install Ollama on development machine
+  - [ ] Pull TinyLlama model (~637MB download)
+  - [ ] Start Ollama server (localhost:11434)
+  - [ ] Test Ollama API connectivity and basic generation
 
-- [ ] **Data Management**
-  - [ ] Create pinned documents collection and upload system
-  - [ ] Implement PDF/DOCX text extraction (pdf-parse, mammoth)
-  - [ ] Add admin interface for managing 5 pinned documents
-  - [ ] Optimize data retrieval for 1000+ messages per channel
+- [ ] **Convex Schema Extensions**
+  - [ ] Add `summaries` table to schema with proper indexes
+  - [ ] Deploy schema changes to Convex
+  - [ ] Create summary caching mechanism (24-hour TTL)
+
+- [ ] **Backend AI Integration**
+  - [ ] Create `convex/aiSummary.ts` with core functions:
+    - [ ] `aggregateMessages()`: Fetch messages with workspace isolation
+    - [ ] `buildSummaryContext()`: Format messages with user names/timestamps
+    - [ ] `callTinyLlama()`: HTTP call to local Ollama server
+    - [ ] `parseSummaryResponse()`: Parse and structure AI response
+  - [ ] Implement `generateThreadSummary` Convex action
+  - [ ] Implement `generateChannelSummary` Convex action
+  - [ ] Add error handling for Ollama server unavailable scenarios
+  - [ ] Create fallback summary generation when AI fails
+  - [ ] Add message limits (max 500 messages per summary)
+  - [ ] Implement concurrent request limiting (2-3 simultaneous)
+
+- [ ] **Frontend UI Development**
+  - [ ] Create `<SummaryButton />` component with loading states
+  - [ ] Create `<SummaryModal />` component with structured display:
+    - [ ] Participants section
+    - [ ] Key Discussion Points
+    - [ ] Decisions Made
+    - [ ] Action Items
+    - [ ] Next Steps
+  - [ ] Add summary buttons to thread headers
+  - [ ] Add summary buttons to channel headers
+  - [ ] Implement copy-to-clipboard functionality
+  - [ ] Add proper loading states and error handling
+
+- [ ] **Integration & Testing**
+  - [ ] Create React hooks: `useGenerateThreadSummary()`, `useGenerateChannelSummary()`
+  - [ ] Test with various scenarios:
+    - [ ] Short threads (< 10 messages)
+    - [ ] Long threads (50+ messages)
+    - [ ] Empty threads
+    - [ ] Ollama server down
+    - [ ] Network timeouts
+  - [ ] Implement summary caching and invalidation logic
 
 ### 3.3. Auto-Reply Composer Implementation ✅ COMPLETED
 - [x] **Backend API Development**
@@ -132,43 +158,23 @@
   - [x] ~~Provide contextual feedback to users~~
   - [x] ~~Support real-time analysis during message composition~~
 
-### 3.5. Meeting Notes Generator Implementation
-- [ ] **Backend API Development**
-  - [ ] Create `/api/ai/meetingNotes` Next.js API route
-  - [ ] Implement thread context gathering and formatting
-  - [ ] Create meeting notes prompt template
-  - [ ] Add structured output parsing (title, bullets, actions)
-  - [ ] Implement rate limiting (3 calls per 10 minutes per user)
-
-- [ ] **Frontend UI Development**
-  - [ ] Add "Generate Meeting Notes" button to thread header
-  - [ ] Create meeting notes modal with formatted display
-  - [ ] Implement "Copy to Clipboard" functionality
-  - [ ] Add download option for future enhancement
-  - [ ] Handle empty threads and error states
-
-- [ ] **Content Processing**
-  - [ ] Implement action item detection and highlighting
-  - [ ] Add timestamp and participant information
-  - [ ] Create summary length optimization (150-200 words)
-
-### 3.6. AI System Optimization
+### 3.5. AI System Optimization
 - [ ] **Performance & Reliability**
-  - [ ] Implement fallback to Hugging Face API for quota limits
-  - [ ] Add retry logic for transient failures
-  - [ ] Optimize token usage and context window management
-  - [ ] Create AI service health monitoring
+  - [ ] Implement TinyLlama health monitoring and auto-restart
+  - [ ] Add retry logic for transient Ollama failures
+  - [ ] Optimize context window management for TinyLlama
+  - [ ] Create AI service health monitoring dashboard
 
 - [ ] **Error Handling & Fallbacks**
   - [ ] Implement comprehensive error handling for all AI features
-  - [ ] Add graceful degradation when AI services are unavailable
+  - [ ] Add graceful degradation when Ollama is unavailable
   - [ ] Create user-friendly error messages and recovery options
   - [ ] Add logging and monitoring for AI service usage
 
 - [ ] **Security & Privacy**
-  - [ ] Implement secure API key management
+  - [ ] Ensure workspace isolation in all AI operations
   - [ ] Add input validation and sanitization
-  - [ ] Ensure no sensitive data leakage in prompts
+  - [ ] Implement secure local AI processing (no data leaves infrastructure)
   - [ ] Add audit logging for AI feature usage
 
 ---
@@ -177,10 +183,11 @@
 
 ### 4.1. AI Features Testing
 - [ ] Unit tests for AI prompt generation and response parsing
-- [ ] Integration tests for all three AI endpoints
+- [ ] Integration tests for TinyLlama connectivity and responses
 - [ ] Load testing with multiple concurrent AI requests
-- [ ] Token limit and context overflow testing
+- [ ] Context overflow and message limit testing
 - [ ] Rate limiting and caching validation
+- [ ] Ollama server failure and recovery testing
 
 ### 4.2. End-to-End Testing
 - [ ] Complete user journey testing with AI features
@@ -190,9 +197,9 @@
 - [ ] Performance testing under realistic load (10-20 users)
 
 ### 4.3. Security & Privacy Testing
-- [ ] API key security validation
+- [ ] Local AI processing validation (no external data transmission)
 - [ ] Authentication and authorization testing
-- [ ] Data privacy and GDPR compliance review
+- [ ] Data privacy and workspace isolation review
 - [ ] Input validation and XSS prevention testing
 
 ---
@@ -202,11 +209,12 @@
 ### 5.1. Production Deployment
 - [ ] Configure production environment variables
 - [ ] Set up Vercel deployment with Convex integration
+- [ ] Document local AI setup requirements for production
 
 ### 5.2. Performance Monitoring
 - [ ] Implement AI usage analytics and monitoring
 - [ ] Set up error tracking and alerting
-- [ ] Monitor API quota usage and costs
-- [ ] Create performance dashboards
+- [ ] Monitor TinyLlama performance and resource usage
+- [ ] Create performance dashboards for AI features
 
 ---
