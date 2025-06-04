@@ -44,6 +44,7 @@ export const Conversation = ({ id }: ConversationProps) => {
         loadMore={getMessages.loadMore}
         isLoadingMore={getMessages.status === "LoadingMore"}
         canLoadMore={getMessages.status === "CanLoadMore"}
+        conversationId={id}
       />
       <ChatInput
         placeholder={`Message ${getMember.data?.user.name}`}

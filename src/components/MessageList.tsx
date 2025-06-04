@@ -25,6 +25,7 @@ interface MessageListProps {
   canLoadMore: boolean;
   isLoadingMore: boolean;
   loadMore: () => void;
+  conversationId?: Id<"conversations">;
 }
 
 const TIME_THRESHOLD = 5;
@@ -46,6 +47,7 @@ export const MessageList = ({
   memberName,
   variant = "channel",
   loadMore,
+  conversationId,
 }: MessageListProps) => {
   const [editingId, setEditingId] = useState<Id<"messages"> | null>(null);
 
@@ -107,6 +109,7 @@ export const MessageList = ({
                 isCompact={isCompact}
                 hideThreadButton={variant === "thread"}
                 isAuthor={currentMember.data?._id === message.memberId}
+                conversationId={conversationId}
               />
             );
           })}

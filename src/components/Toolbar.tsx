@@ -1,4 +1,4 @@
-import { MessageSquareTextIcon, Pencil, Smile, Trash } from "lucide-react";
+import { MessageSquareTextIcon, Pencil, Smile, Trash, Bot } from "lucide-react";
 
 import { Button } from "./ui/button";
 import { Hint } from "./Hint";
@@ -12,6 +12,7 @@ interface ToolbarProps {
   onThread: () => void;
   onDelete: () => void;
   onReaction: (value: string) => void;
+  onAIResponse?: () => void;
 }
 
 export const Toolbar = ({
@@ -22,6 +23,7 @@ export const Toolbar = ({
   onEdit,
   onReaction,
   onThread,
+  onAIResponse,
 }: ToolbarProps) => {
   return (
     <div className="absolute top-0 right-5">
@@ -34,6 +36,19 @@ export const Toolbar = ({
             <Smile className="size-4" />
           </Button>
         </EmojiPopover>
+        {onAIResponse && (
+          <Hint label="Ask AI to respond">
+            <Button
+              size="icon"
+              variant="ghost"
+              disabled={isPending}
+              onClick={onAIResponse}
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            >
+              <Bot className="size-4" />
+            </Button>
+          </Hint>
+        )}
         {!hideThreadButton && (
           <Hint label="Reply in thread">
             <Button

@@ -1,6 +1,6 @@
 import "quill/dist/quill.snow.css";
 
-import { ImageIcon, Smile, XIcon } from "lucide-react";
+import { ImageIcon, Smile, XIcon, Bot } from "lucide-react";
 import Quill, { QuillOptions } from "quill";
 import { Delta, Op } from "quill/core";
 import {
@@ -36,6 +36,8 @@ interface EditorProps {
   placeholder?: string;
   onCancel?: () => void;
   onSubmit: ({ image, body }: EditorValue) => void;
+  onSuggestReply?: () => void;
+  showSuggestReply?: boolean;
 }
 
 function capitalizeFirst(str: string) {
@@ -51,11 +53,15 @@ const Editor = ({
   placeholder = "Write something...",
   onCancel,
   onSubmit,
+  onSuggestReply,
+  showSuggestReply = false,
 }: EditorProps) => {
   const [image, setImage] = useState<File | null>(null);
   const [text, setText] = useState("");
   const [tone, setTone] = useState<string | null>(null);
   const [loadingTone, setLoadingTone] = useState(false);
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const toneTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -97,7 +103,7 @@ const Editor = ({
 
         const systemPrompt = `
             You are a Tone & Impact Analyzer. 
-            Given the user’s draft message, classify its tone as one of: "aggressive", "weak", "confusing", "neutral", or "friendly".
+            Given the user's draft message, classify its tone as one of: "aggressive", "weak", "confusing", "neutral", or "friendly".
             Then classify its impact as one of: "low-impact", "medium-impact", or "high-impact".
             Return ONLY this JSON:
             { "tone": "<tone>", "impact": "<impact>" }
@@ -240,6 +246,30 @@ const Editor = ({
     quill?.insertText(quill?.getSelection()?.index || 0, emoji);
   };
 
+  const handleSuggestReply = async () => {
+    if (!onSuggestReply) return;
+    
+    setLoadingSuggestion(true);
+    try {
+      await onSuggestReply();
+    } catch (error) {
+      console.error("Error getting AI suggestions:", error);
+    } finally {
+      setLoadingSuggestion(false);
+    }
+  };
+
+  const insertSuggestion = (suggestion: string) => {
+    const quill = quillRef.current;
+    if (!quill) return;
+
+    // Clear current content and insert suggestion
+    quill.setContents([]);
+    quill.insertText(0, suggestion);
+    setText(suggestion);
+    setSuggestions([]);
+  };
+
   return (
     <div className="flex flex-col">
       <input
@@ -249,6 +279,34 @@ const Editor = ({
         onChange={(event) => setImage(event.target.files![0])}
         className="hidden"
       />
+      
+      {/* AI Suggestions Panel */}
+      {suggestions.length > 0 && (
+        <div className="mb-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+          <div className="flex items-center gap-2 mb-2">
+            <Bot className="size-4 text-blue-600" />
+            <span className="text-sm font-medium text-blue-800">AI Suggestions</span>
+          </div>
+          <div className="space-y-2">
+            {suggestions.map((suggestion, index) => (
+              <button
+                key={index}
+                onClick={() => insertSuggestion(suggestion)}
+                className="w-full text-left p-2 text-sm bg-white border border-blue-200 rounded hover:bg-blue-50 transition-colors"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setSuggestions([])}
+            className="mt-2 text-xs text-blue-600 hover:text-blue-800"
+          >
+            Dismiss suggestions
+          </button>
+        </div>
+      )}
+
       <div
         className={cn(
           "flex flex-col border border-slate-200 rounded-md overflow-hidden focus-within:border-slate-300 focus-within:shadow-sm transition bg-white",
@@ -309,6 +367,20 @@ const Editor = ({
               </Button>
             </Hint>
           )}
+          {/* AI Suggest Reply Button */}
+          {showSuggestReply && variant === "create" && (
+            <Hint label="Get AI reply suggestions">
+              <Button
+                disabled={disabled || loadingSuggestion}
+                size="sm"
+                variant="ghost"
+                onClick={handleSuggestReply}
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              >
+                <Bot className="size-4" />
+              </Button>
+            </Hint>
+          )}
           {variant === "update" && (
             <div className="ml-auto flex items-center gap-x-2">
               <Button
@@ -358,16 +430,19 @@ const Editor = ({
         </div>
       </div>
 
-        <div className="mt-2 flex flex-col items-start px-2">
-          {loadingTone && (
-            <p className="text-xs text-gray-500 italic">Checking tone…</p>
-          )}
-          {!loadingTone && tone && (
-            <p className="text-xs">
-              <strong>✨Tone & Impact: </strong> {tone}
-            </p>
-          )}
-        </div>
+      <div className="mt-2 flex flex-col items-start px-2">
+        {loadingSuggestion && (
+          <p className="text-xs text-blue-500 italic">Getting AI suggestions…</p>
+        )}
+        {loadingTone && (
+          <p className="text-xs text-gray-500 italic">Checking tone…</p>
+        )}
+        {!loadingTone && tone && (
+          <p className="text-xs">
+            <strong>✨Tone & Impact: </strong> {tone}
+          </p>
+        )}
+      </div>
 
       {variant === "create" && (
         <div

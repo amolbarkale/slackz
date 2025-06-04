@@ -1,0 +1,359 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+# AI Response Feature - Product Requirements Document
+
+## Executive Summary
+The AI Response feature provides intelligent, context-aware automatic responses to messages in the Slack clone platform. Users can trigger AI-generated replies with a single click, leveraging Google's Gemini AI to analyze conversation context and generate appropriate responses.
+
+**Core Functionality:**
+- One-click AI response generation via bot icon in message toolbar
+- Context-aware responses using last 10 messages for conversation understanding
+- Smart targeting (only available for messages from other users)
+- Professional, helpful responses with clear AI identification
+- Integration across all message contexts (channels, conversations, threads)
+
+**Technical Stack:**
+- Google Gemini Pro AI model for response generation
+- Convex backend for AI processing and message storage
+- React frontend with real-time updates
+- Context gathering from conversation history
+
+**Target:** Production-ready AI response feature integrated seamlessly into existing chat platform.
+
+## Goals & Success Criteria
+
+### Primary Objectives
+- **Instant AI Assistance**: Users can generate contextually appropriate responses to any message with one click
+- **Context Intelligence**: AI analyzes recent conversation history (10 messages) to provide relevant responses
+- **User Experience**: Seamless integration with existing message toolbar without disrupting chat flow
+- **Response Quality**: Professional, helpful responses that match conversation tone and context
+- **Universal Availability**: Works in channels, direct conversations, and threaded discussions
+
+### Success Metrics
+- **Response Time**: AI responses generated within 3-5 seconds
+- **User Adoption**: 30%+ of users try the feature within first week
+- **Response Quality**: 80%+ of generated responses are contextually appropriate
+- **Error Rate**: <5% failure rate for AI response generation
+- **User Satisfaction**: Positive feedback on response helpfulness and relevance
+
+## User Personas & Scenarios
+
+### Sarah (Busy Team Lead)
+- Receives multiple questions from team members throughout the day
+- Uses AI responses to quickly provide helpful replies when swamped with meetings
+- Appreciates context-aware suggestions that reference previous discussions
+- Scenario: Team member asks about project status → AI generates response referencing recent updates
+
+### Mike (New Team Member)
+- Joining ongoing conversations and wants to contribute meaningfully
+- Uses AI to help craft appropriate responses that match team communication style
+- Benefits from AI understanding of conversation context and history
+- Scenario: Complex technical discussion → AI helps formulate thoughtful follow-up questions
+
+### Lisa (Customer Support)
+- Handles multiple customer inquiries simultaneously
+- Uses AI to generate initial response drafts for common questions
+- Relies on context awareness to reference previous conversation points
+- Scenario: Customer follow-up question → AI generates response acknowledging previous context
+
+## Functional Requirements
+
+### 1. AI Response Trigger
+**Visual Integration**
+- Blue robot icon (🤖) in message toolbar
+- Only appears on messages from other users (not user's own messages)
+- Positioned between emoji reactions and thread reply buttons
+- Hover tooltip: "Ask AI to respond"
+- Loading state during AI processing
+
+**Interaction Flow**
+- Single click triggers AI response generation
+- Visual feedback during processing (button disabled, loading indicator)
+- Success notification: "AI response generated!"
+- Error handling with clear failure messages
+
+### 2. Context Analysis
+**Conversation Context Gathering**
+- Analyzes last 10 messages in current conversation thread
+- Includes message content, author names, and timestamps
+- Respects conversation boundaries (channel/DM/thread)
+- Filters out system messages and AI-generated content
+
+**Context Processing**
+- Builds chronological conversation history
+- Identifies key discussion points and topics
+- Recognizes question-answer patterns
+- Maintains conversation flow understanding
+
+### 3. AI Response Generation
+**Prompt Engineering**
+- Professional, helpful AI assistant persona
+- Context-aware response generation
+- Appropriate tone matching (professional, friendly, technical)
+- Question answering and thoughtful commentary
+
+**Response Characteristics**
+- Concise but comprehensive (typically 1-3 sentences)
+- Contextually relevant to conversation topic
+- Professional and workplace-appropriate tone
+- Clear AI identification with 🤖 emoji prefix
+
+### 4. Message Integration
+**Response Delivery**
+- AI response appears as new message in conversation
+- Clearly marked with "🤖 AI Response:" prefix
+- Posted by the user who triggered the AI
+- Maintains conversation threading context
+- Real-time delivery to all participants
+
+**Message Format**
+- Structured as standard message with AI identification
+- Proper formatting for readability
+- Integration with existing message features (reactions, threading)
+- Searchable and persistent like regular messages
+
+## Technical Implementation
+
+### Backend Architecture (Convex)
+
+**AI Response Mutation**
+```javascript
+export const generateAIResponse = mutation({
+  args: {
+    workspaceId: v.id("workspaces"),
+    channelId: v.optional(v.id("channels")),
+    conversationId: v.optional(v.id("conversations")),
+    parentMessageId: v.optional(v.id("messages")),
+    contextMessageId: v.id("messages"),
+  },
+  handler: async (ctx, args) => {
+    // Authentication and authorization
+    // Context gathering (last 10 messages)
+    // AI processing with Google Gemini
+    // Response message creation
+  }
+});
+```
+
+**Context Gathering Logic**
+- Query messages using indexed database lookups
+- Respect conversation boundaries (channel/DM/thread)
+- Populate user information for context
+- Build chronological conversation history
+- Handle edge cases (empty conversations, deleted messages)
+
+**AI Integration**
+- Google Gemini Pro model for response generation
+- Structured prompt with conversation context
+- Error handling for API failures
+- Response formatting and validation
+
+### Frontend Architecture (React)
+
+**Hook Implementation**
+```typescript
+export const useGenerateAIResponse = () => {
+  const mutation = useConvexMutation(api.messages.generateAIResponse);
+  return useReactQueryMutation({ mutationFn: mutation });
+};
+```
+
+**UI Components**
+- Enhanced Toolbar component with AI button
+- Loading states and error handling
+- Toast notifications for user feedback
+- Responsive design for mobile and desktop
+
+**State Management**
+- Integration with existing message state
+- Real-time updates via Convex subscriptions
+- Error state handling and recovery
+- Loading state coordination
+
+### Data Flow
+
+**AI Response Generation Flow**
+1. User clicks AI button on target message
+2. Frontend validates permissions and context
+3. Backend gathers conversation context (10 messages)
+4. AI processes context and generates response
+5. Response saved as new message in database
+6. Real-time update delivers response to all users
+7. Success notification shown to triggering user
+
+**Error Handling Flow**
+1. API failures → Generic error message
+2. Context gathering issues → Fallback to single message
+3. Rate limiting → Clear user feedback
+4. Network issues → Retry mechanism
+5. Invalid permissions → Silent failure (no button shown)
+
+## Security & Privacy
+
+### Data Protection
+**Context Privacy**
+- AI only accesses messages within user's workspace
+- No cross-workspace data leakage
+- Temporary processing (no persistent AI data storage)
+- Conversation context limited to recent messages (10 max)
+
+**API Security**
+- Secure API key management via environment variables
+- Request validation and sanitization
+- Rate limiting to prevent abuse
+- Error messages that don't expose system details
+
+### Access Control
+**User Permissions**
+- Only workspace members can trigger AI responses
+- AI button only appears on others' messages
+- Respects existing channel/conversation permissions
+- No special AI permissions required
+
+**Workspace Isolation**
+- All AI processing scoped to single workspace
+- No cross-workspace context bleeding
+- Workspace-specific rate limiting
+- Isolated error handling per workspace
+
+## Performance Requirements
+
+### Response Time Targets
+- **AI Processing**: 2-5 seconds for response generation
+- **Context Gathering**: <500ms for message history retrieval
+- **Message Delivery**: <200ms for real-time response posting
+- **UI Feedback**: Immediate loading state on button click
+
+### Scalability Considerations
+- **Concurrent Requests**: Support 10+ simultaneous AI requests per workspace
+- **Context Size**: Efficient handling of large conversation histories
+- **Database Performance**: Optimized queries with proper indexing
+- **API Rate Limits**: Graceful handling of Google AI API limits
+
+### Resource Management
+- **Memory Usage**: Efficient context processing without memory leaks
+- **API Costs**: Intelligent context truncation to manage costs
+- **Database Load**: Optimized queries to minimize database impact
+- **Network Efficiency**: Compressed API requests and responses
+
+## Error Handling & Fallbacks
+
+### AI Service Failures
+**Google AI API Issues**
+- Network timeouts → Retry with exponential backoff
+- Rate limiting → Clear user feedback with retry suggestion
+- API key issues → Admin notification system
+- Service downtime → Graceful degradation message
+
+**Response Quality Issues**
+- Empty responses → Fallback generic helpful message
+- Inappropriate content → Content filtering and regeneration
+- Context misunderstanding → User feedback mechanism
+- Technical errors → Clear error reporting
+
+### System Resilience
+**Database Issues**
+- Context gathering failures → Single message fallback
+- Message creation failures → Retry mechanism
+- Connection issues → Offline state handling
+- Data corruption → Validation and recovery
+
+**Frontend Robustness**
+- Network disconnection → Reconnection handling
+- Component errors → Error boundaries
+- State corruption → State recovery mechanisms
+- Performance degradation → Progressive enhancement
+
+## Monitoring & Analytics
+
+### Usage Metrics
+- **Feature Adoption**: AI button click rates per user/workspace
+- **Success Rates**: Successful AI response generation percentage
+- **Response Quality**: User feedback on AI response helpfulness
+- **Performance**: Average response generation time
+- **Error Rates**: Failed AI requests by error type
+
+### Technical Monitoring
+- **API Performance**: Google AI API response times and error rates
+- **Database Performance**: Context gathering query performance
+- **System Health**: Overall feature availability and reliability
+- **Cost Tracking**: AI API usage and associated costs
+
+### User Feedback
+- **Response Rating**: Optional thumbs up/down on AI responses
+- **Feature Usage**: Frequency and patterns of AI feature usage
+- **Error Reporting**: User-reported issues and feedback
+- **Improvement Suggestions**: User requests for feature enhancements
+
+## Future Enhancements
+
+### Phase 2 Features
+- **Custom AI Personalities**: Workspace-specific AI response styles
+- **Response Templates**: Pre-defined response patterns for common scenarios
+- **Multi-language Support**: AI responses in user's preferred language
+- **Response Editing**: Allow users to edit AI responses before posting
+
+### Advanced Capabilities
+- **Smart Triggers**: Automatic AI responses based on keywords or patterns
+- **Response Learning**: AI learns from user editing patterns
+- **Integration APIs**: Third-party integrations for specialized responses
+- **Advanced Context**: Include file attachments and external references
+
+### Optimization Opportunities
+- **Response Caching**: Cache similar responses for improved performance
+- **Batch Processing**: Handle multiple AI requests efficiently
+- **Predictive Generation**: Pre-generate responses for likely scenarios
+- **Context Compression**: Intelligent summarization of long conversations
+
+## Risk Assessment & Mitigation
+
+### Technical Risks
+**AI Model Limitations**
+- Risk: Inappropriate or irrelevant responses
+- Mitigation: Content filtering, user feedback, response validation
+
+**API Dependency**
+- Risk: Google AI service disruption
+- Mitigation: Fallback providers, graceful degradation, clear error messages
+
+**Performance Impact**
+- Risk: AI processing slows down chat experience
+- Mitigation: Asynchronous processing, loading states, performance monitoring
+
+### Business Risks
+**User Adoption**
+- Risk: Low feature usage due to poor discoverability
+- Mitigation: Clear UI indicators, onboarding, user education
+
+**Cost Management**
+- Risk: High AI API costs with increased usage
+- Mitigation: Rate limiting, usage monitoring, cost alerts
+
+**Quality Control**
+- Risk: Poor AI responses damage user experience
+- Mitigation: Response validation, user feedback, continuous improvement
+
+## Success Criteria & KPIs
+
+### Launch Criteria
+- ✅ AI response generation working in all conversation types
+- ✅ Context gathering functioning correctly
+- ✅ Error handling and fallbacks implemented
+- ✅ Performance targets met (3-5 second response time)
+- ✅ Security and privacy requirements satisfied
+
+### Post-Launch KPIs
+- **Adoption Rate**: 30% of active users try feature within 2 weeks
+- **Success Rate**: 95% of AI requests complete successfully
+- **User Satisfaction**: 4+ star average rating on response quality
+- **Performance**: 90% of responses generated within 5 seconds
+- **Cost Efficiency**: AI costs remain under $0.10 per active user per month
+
+---
+
+**Implementation Status**: ✅ Complete
+**Dependencies**: Google AI API key configuration, Convex environment setup
+

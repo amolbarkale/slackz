@@ -4,9 +4,12 @@ import { toast } from "sonner";
 
 import { useRemoveMessage } from "@/features/messages/api/useRemoveMessage";
 import { useUpdateMessage } from "@/features/messages/api/useUpdateMessage";
+import { useGenerateAIResponse } from "@/features/messages/api/useGenerateAIResponse";
 import { useToggleReaction } from "@/features/reactions/api/useToggleReaction";
 import { useConfirm } from "@/hooks/useConfirm";
 import { usePanel } from "@/hooks/usePanel";
+import { useWorkspaceId } from "@/hooks/useWorkspaceId";
+import { useChannelId } from "@/hooks/useChannelId";
 import { cn } from "@/lib/utils";
 import { Doc, Id } from "../../convex/_generated/dataModel";
 import { Hint } from "./Hint";
@@ -43,6 +46,7 @@ interface MessageProps {
   threadTimestamp?: number;
   threadName?: string;
   setEditingId: (id: Id<"messages"> | null) => void;
+  conversationId?: Id<"conversations">;
 }
 
 const formatFullTime = (date: Dayjs) => {
@@ -70,6 +74,7 @@ export const Message = ({
   threadName,
   isAuthor,
   setEditingId,
+  conversationId,
 }: MessageProps) => {
   const {
     parentMessageId,
@@ -81,14 +86,20 @@ export const Message = ({
     "Delete message?",
     "Are you sure you want to delete this message? This cannot be undone"
   );
+  
+  const workspaceId = useWorkspaceId();
+  const channelId = useChannelId();
+  
   const updateMessage = useUpdateMessage();
   const removeMessage = useRemoveMessage();
   const toggleReaction = useToggleReaction();
+  const generateAIResponse = useGenerateAIResponse();
 
   const isPending =
     updateMessage.isPending ||
     removeMessage.isPending ||
-    toggleReaction.isPending;
+    toggleReaction.isPending ||
+    generateAIResponse.isPending;
 
   const handleUpdate = ({ body }: { body: string }) => {
     updateMessage
@@ -137,6 +148,24 @@ export const Message = ({
       .catch((error) => {
         console.error(error);
         toast.error("Failed to toggle reaction");
+      });
+  };
+
+  const handleAIResponse = () => {
+    generateAIResponse
+      .mutateAsync({
+        workspaceId,
+        channelId: channelId || undefined,
+        conversationId: conversationId || undefined,
+        parentMessageId: (parentMessageId as Id<"messages">) || undefined,
+        contextMessageId: id,
+      })
+      .then(() => {
+        toast.success("AI response generated!");
+      })
+      .catch((error) => {
+        console.error(error);
+        toast.error("Failed to generate AI response");
       });
   };
 
@@ -197,6 +226,7 @@ export const Message = ({
               onThread={() => openMessage(id)}
               onDelete={handleRemove}
               onReaction={handleReaction}
+              onAIResponse={!isAuthor ? handleAIResponse : undefined}
             />
           )}
         </div>
@@ -275,6 +305,7 @@ export const Message = ({
             onThread={() => openMessage(id)}
             onDelete={handleRemove}
             onReaction={handleReaction}
+            onAIResponse={!isAuthor ? handleAIResponse : undefined}
           />
         )}
       </div>

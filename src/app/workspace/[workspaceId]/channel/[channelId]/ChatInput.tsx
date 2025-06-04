@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { useCreateMessage } from "@/features/messages/api/useCreateMessage";
+import { useGenerateAIResponse } from "@/features/messages/api/useGenerateAIResponse";
+import { useGetMessages } from "@/features/messages/api/useGetMessages";
 import { useGenerateUploadUrl } from "@/features/upload/api/useGenerateUploadUrl";
 import { useChannelId } from "@/hooks/useChannelId";
 import { useWorkspaceId } from "@/hooks/useWorkspaceId";
@@ -30,7 +32,13 @@ export const ChatInput = ({ placeholder }: ChatInputProps) => {
   const workspaceId = useWorkspaceId();
   const channelId = useChannelId();
   const createMessage = useCreateMessage();
+  const generateAIResponse = useGenerateAIResponse();
   const generateUploadUrl = useGenerateUploadUrl();
+  
+  // Get recent messages for AI context
+  const getMessages = useGetMessages({
+    channelId,
+  });
 
   const handleSubmit = async ({
     body,
@@ -77,6 +85,31 @@ export const ChatInput = ({ placeholder }: ChatInputProps) => {
     }
   };
 
+  const handleSuggestReply = async () => {
+    try {
+      // Get the most recent message to respond to
+      const recentMessages = getMessages.results;
+      if (recentMessages.length === 0) {
+        toast.error("No messages to respond to");
+        return;
+      }
+
+      const lastMessage = recentMessages[0];
+      
+      // Generate AI response using the existing mutation
+      await generateAIResponse.mutateAsync({
+        workspaceId,
+        channelId,
+        contextMessageId: lastMessage._id,
+      });
+
+      toast.success("AI suggestion generated!");
+    } catch (error) {
+      console.error("Error generating AI suggestion:", error);
+      toast.error("Failed to generate AI suggestion");
+    }
+  };
+
   return (
     <div className="px-5 w-full">
       <Editor
@@ -85,6 +118,8 @@ export const ChatInput = ({ placeholder }: ChatInputProps) => {
         onSubmit={handleSubmit}
         disabled={isPending}
         innerRef={editorRef}
+        showSuggestReply={getMessages.results.length > 0}
+        onSuggestReply={handleSuggestReply}
       />
     </div>
   );
