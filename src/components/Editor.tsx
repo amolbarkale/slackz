@@ -386,7 +386,7 @@ const Editor = ({
                 onClick={handleSuggestReply}
                 className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
               >
-                <Bot className="size-4" />
+                <Bot className="size-6 mb-1" />
               </Button>
             </Hint>
           )}

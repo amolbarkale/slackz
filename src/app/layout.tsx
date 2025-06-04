@@ -21,6 +21,19 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "Slackz",
+  icons: {
+    icon: [
+      {
+        url: "/logo.svg",
+        sizes: "any",
+      },
+      {
+        url: "/logo.svg",
+        type: "image/svg+xml",
+      },
+    ],
+    apple: "/logo.svg",
+  },
 };
 
 export default function RootLayout({

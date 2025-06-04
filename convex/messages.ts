@@ -382,7 +382,7 @@ export const getConversationContext = internalQuery({
           .eq("conversationId", args.conversationId)
       )
       .order("desc")
-      .take(10);
+      .take(20);
 
     // Build conversation context
     const conversationContext = await Promise.all(
