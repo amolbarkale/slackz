@@ -72,53 +72,53 @@
 - [ ] Add rate limiting middleware for AI endpoints
 - [ ] Create `aiLogs` collection in Convex for monitoring
 
-### 3.2. AI Thread/Channel Summary Implementation (llama3.2:3b + Ollama)
-- [ ] **Local AI Setup**
-  - [ ] Install Ollama on development machine
-  - [ ] Pull llama3.2:3b model (~637MB download)
-  - [ ] Start Ollama server (localhost:11434)
-  - [ ] Test Ollama API connectivity and basic generation
+### 3.2. AI Thread/Channel Summary Implementation (TinyLlama + Ollama) ✅ COMPLETED
+- [x] **Local AI Setup**
+  - [x] ~~Install Ollama on development machine~~
+  - [x] ~~Pull llama3.2:3b model (~637MB download)~~
+  - [x] ~~Start Ollama server (localhost:11434)~~
+  - [x] ~~Test Ollama API connectivity and basic generation~~
 
-- [ ] **Convex Schema Extensions**
-  - [ ] Add `summaries` table to schema with proper indexes
-  - [ ] Deploy schema changes to Convex
-  - [ ] Create summary caching mechanism (24-hour TTL)
+- [x] **Convex Schema Extensions**
+  - [x] ~~Add `summaries` table to schema with proper indexes~~
+  - [x] ~~Deploy schema changes to Convex~~
+  - [x] ~~Create summary caching mechanism with database storage~~
 
-- [ ] **Backend AI Integration**
-  - [ ] Create `convex/aiSummary.ts` with core functions:
-    - [ ] `aggregateMessages()`: Fetch messages with workspace isolation
-    - [ ] `buildSummaryContext()`: Format messages with user names/timestamps
-    - [ ] `callTinyLlama()`: HTTP call to local Ollama server
-    - [ ] `parseSummaryResponse()`: Parse and structure AI response
-  - [ ] Implement `generateThreadSummary` Convex action
-  - [ ] Implement `generateChannelSummary` Convex action
-  - [ ] Add error handling for Ollama server unavailable scenarios
-  - [ ] Create fallback summary generation when AI fails
-  - [ ] Add message limits (max 500 messages per summary)
-  - [ ] Implement concurrent request limiting (2-3 simultaneous)
+- [x] **Backend AI Integration**
+  - [x] ~~Create `convex/aiSummary.ts` with core functions:~~
+    - [x] ~~`aggregateMessages()`: Fetch messages with workspace isolation~~
+    - [x] ~~`buildSummaryPrompt()`: Format messages with user names/timestamps~~
+    - [x] ~~`callTinyLlama()`: HTTP call to local Ollama server~~
+    - [x] ~~`extractTextFromQuillJson()`: Parse Quill editor JSON format~~
+  - [x] ~~Implement `generateThreadSummary` function~~
+  - [x] ~~Implement `generateChannelSummary` function~~
+  - [x] ~~Implement `generateConversationSummary` function for DMs~~
+  - [x] ~~Add error handling for Ollama server unavailable scenarios~~
+  - [x] ~~Create fallback summary generation when AI fails~~
+  - [x] ~~Add message limits (max 500 messages per summary)~~
+  - [x] ~~Support for conversation summaries including thread replies~~
 
-- [ ] **Frontend UI Development**
-  - [ ] Create `<SummaryButton />` component with loading states
-  - [ ] Create `<SummaryModal />` component with structured display:
-    - [ ] Participants section
-    - [ ] Key Discussion Points
-    - [ ] Decisions Made
-    - [ ] Action Items
-    - [ ] Next Steps
-  - [ ] Add summary buttons to thread headers
-  - [ ] Add summary buttons to channel headers
-  - [ ] Implement copy-to-clipboard functionality
-  - [ ] Add proper loading states and error handling
+- [x] **Frontend UI Development**
+  - [x] ~~Create `<AISummaryModal />` component with structured display:~~
+    - [x] ~~Participants section~~
+    - [x] ~~Key Discussion Points~~
+    - [x] ~~Decisions Made~~
+    - [x] ~~Action Items~~
+    - [x] ~~Next Steps~~
+  - [x] ~~Add summary buttons to channel headers~~
+  - [x] ~~Add summary buttons to DM conversation headers~~
+  - [x] ~~Implement proper loading states and error handling~~
+  - [x] ~~Add regeneration functionality~~
 
-- [ ] **Integration & Testing**
-  - [ ] Create React hooks: `useGenerateThreadSummary()`, `useGenerateChannelSummary()`
-  - [ ] Test with various scenarios:
-    - [ ] Short threads (< 10 messages)
-    - [ ] Long threads (50+ messages)
-    - [ ] Empty threads
-    - [ ] Ollama server down
-    - [ ] Network timeouts
-  - [ ] Implement summary caching and invalidation logic
+- [x] **Integration & Testing**
+  - [x] ~~Integrate with channel and conversation headers~~
+  - [x] ~~Test with various scenarios:~~
+    - [x] ~~Channel messages (excluding thread replies)~~
+    - [x] ~~Direct messages (including thread replies)~~
+    - [x] ~~Empty conversations~~
+    - [x] ~~Ollama server connectivity~~
+    - [x] ~~Text extraction from Quill JSON format~~
+  - [x] ~~Implement summary caching and database storage~~
 
 ### 3.3. Auto-Reply Composer Implementation ✅ COMPLETED
 - [x] **Backend API Development**
