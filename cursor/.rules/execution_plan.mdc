@@ -292,9 +292,9 @@ Below is a phased, atomic-task breakdown using the MoSCoW prioritization framewo
 
 ---
 
-# Phase 6: AI Summary Feature (TinyLlama + Convex)
+# Phase 6: AI Summary Feature (llama3.2:3b + Convex)
 
-> **Goal**: Implement AI-powered thread and channel summarization using local TinyLlama via Ollama.
+> **Goal**: Implement AI-powered thread and channel summarization using local llama3.2:3b via Ollama.
 
 ### 6.1. Local AI Setup
 - **MUST**  
@@ -302,9 +302,9 @@ Below is a phased, atomic-task breakdown using the MoSCoW prioritization framewo
      ```bash
      curl -fsSL https://ollama.ai/install.sh | sh
      ```
-  2. Pull TinyLlama model (~637MB):  
+  2. Pull llama3.2:3b model (~2GB):  
      ```bash
-     ollama pull tinyllama
+     ollama pull llama3.2:3b
      ```
   3. Start Ollama server:  
      ```bash
@@ -351,7 +351,7 @@ Below is a phased, atomic-task breakdown using the MoSCoW prioritization framewo
          // 1. Verify user permissions
          // 2. Aggregate messages with workspace isolation
          // 3. Build context with user names and timestamps
-         // 4. Call local TinyLlama via HTTP
+         // 4. Call local llama3.2:3b via HTTP
          // 5. Cache summary in database
          // 6. Return structured summary
        }

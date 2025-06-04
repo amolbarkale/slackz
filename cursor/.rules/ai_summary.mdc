@@ -8,7 +8,7 @@ alwaysApply: true
 ## 🎯 **Feature Overview**
 
 **Feature Name**: AI-Powered Thread & Channel Summarizer  
-**Implementation**: Local TinyLlama via Ollama + Convex Backend  
+**Implementation**: Local llama3.2:3b via Ollama + Convex Backend  
 **Timeline**: 6 hours development  
 **Priority**: High (MVP Core Feature)
 
@@ -37,21 +37,21 @@ alwaysApply: true
 ```
 Frontend: Next.js + React (existing)
 Backend: Convex (existing)
-AI Engine: TinyLlama via Ollama (local)
+AI Engine: llama3.2:3b via Ollama (local)
 API Layer: Convex Actions → HTTP → Ollama Server
 ```
 
 ### **Data Flow**
 ```
 User Click → Convex Action → Message Aggregation → Context Building → 
-TinyLlama Processing → Structured Summary → UI Display
+llama3.2:3b Processing → Structured Summary → UI Display
 ```
 
 ### **Local Development Setup**
 ```bash
 # Ollama Installation
 curl -fsSL https://ollama.ai/install.sh | sh
-ollama pull tinyllama
+ollama pull llama3.2:3b
 ollama serve --host localhost --port 11434
 ```
 
@@ -131,7 +131,7 @@ export const generateThreadSummary = action({
   handler: async (ctx, args) => {
     // 1. Aggregate messages
     // 2. Build context with user names
-    // 3. Call TinyLlama via HTTP
+    // 3. Call llama3.2:3b via HTTP
     // 4. Parse and format response
     // 5. Cache summary in database
     // 6. Return structured summary
@@ -139,14 +139,14 @@ export const generateThreadSummary = action({
 });
 ```
 
-### **TinyLlama Integration**
+### **llama3.2:3b Integration**
 ```typescript
 // Ollama API Call
 const response = await fetch('http://localhost:11434/api/generate', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    model: 'tinyllama',
+    model: 'llama3.2:3b',
     prompt: buildSummaryPrompt(messages),
     stream: false,
     options: {
@@ -168,7 +168,7 @@ const response = await fetch('http://localhost:11434/api/generate', {
 - **Large Channel** (> 500 messages): < 60 seconds
 
 ### **Resource Usage**
-- **TinyLlama RAM**: 2-4GB maximum
+- **llama3.2:3b RAM**: 4-6GB maximum
 - **CPU Usage**: < 80% during generation
 - **Disk Space**: 1GB for model storage
 
@@ -215,13 +215,13 @@ const fallbackSummary = {
 ## 🚀 **Implementation Phases**
 
 ### **Phase 1: Backend Foundation (2 hours)**
-- Set up Ollama with TinyLlama
+- Set up Ollama with llama3.2:3b
 - Create message aggregation functions
 - Implement basic HTTP integration
 - Add database schema for summaries
 
 ### **Phase 2: AI Integration (2 hours)**
-- Build TinyLlama prompt templates
+- Build llama3.2:3b prompt templates
 - Implement summary generation logic
 - Add response parsing and validation
 - Create error handling and fallbacks
@@ -243,7 +243,7 @@ const fallbackSummary = {
 ## 🎯 **Definition of Done**
 
 ### **MVP Completion Criteria**
-- ✅ TinyLlama running locally via Ollama
+- ✅ llama3.2:3b running locally via Ollama
 - ✅ Thread summary generation working
 - ✅ Channel summary generation working
 - ✅ UI buttons and modals implemented

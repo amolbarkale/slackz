@@ -32,60 +32,67 @@ const buildSummaryPrompt = (messages, contextType) => {
     .map(m => `${m.author}: ${m.body}`)
     .join('\n');
 
-  return `You are an AI assistant that creates structured summaries of ${contextType} conversations in a Slack-like workspace.
+  const prompt = `
+You are a professional meeting summarizer. Analyze this conversation and create a structured summary.
 
-Conversation Context:
 Participants: ${participants.join(', ')}
 Total Messages: ${messages.length}
 ${contextType === 'thread' ? 'Thread' : 'Channel'} Discussion:
 
+Conversation:
 ${messageText}
 
-Please create a structured summary with the following sections:
+Create a summary with exactly this format:
 
-**Participants**: List all participants who contributed to the discussion
-
-**Key Discussion Points**: 
-• Main topics discussed (3-5 bullet points)
+**Key Discussion Points**:
+• [Most important topic discussed]
+• [Second most important topic]
+• [Third topic if applicable]
 
 **Decisions Made**:
-• Any concrete decisions or agreements reached
+• [Any concrete decisions or write "None identified"]
 
 **Action Items**:
-• Tasks assigned or next steps identified
-• Include who is responsible if mentioned
+• [Specific tasks with person responsible or write "None identified"]
 
 **Next Steps**:
-• Planned follow-ups or future actions
+• [Planned follow-ups or write "None identified"]
 
-Keep the summary concise but comprehensive. Use bullet points for clarity. If no decisions or action items were made, state "None identified" for those sections.`;
+Keep it concise and professional.
+`;
+return prompt.trim();
 };
 
 const callTinyLlama = async (prompt) => {
+  console.log('prompt:', prompt)
   try {
     const response = await fetch('http://localhost:11434/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'tinyllama',
+        model: 'llama3.2:3b', 
         prompt: prompt,
         stream: false,
-        options: {
-          temperature: 0.3,
-          top_p: 0.9,
-          max_tokens: 800,
+         options: {
+          temperature: 0.2,
+          top_p: 0.9,           
+          top_k: 40,            
+          repeat_penalty: 1.1,  
+          num_predict: 500,     
+          stop: ['\n---', 'END', "**Next Steps**:", "\n\n\n"]
         }
       })
     });
+    console.log('response:', response)
 
     if (!response.ok) {
-      throw new Error(`TinyLlama API error: ${response.status}`);
+      throw new Error(`llama3.2:3b API error: ${response.status}`);
     }
 
     const result = await response.json();
     return result.response;
   } catch (error) {
-    console.error('TinyLlama API call failed:', error);
+    console.error('llama3.2:3b API call failed:', error);
     throw new Error('AI service temporarily unavailable');
   }
 };
@@ -155,7 +162,7 @@ async function runSummaryTests() {
     
     results.push({ conversationName, ...result });
     
-    // Wait between requests to avoid overwhelming TinyLlama
+    // Wait between requests to avoid overwhelming llama3.2:3b
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   

@@ -72,10 +72,10 @@
 - [ ] Add rate limiting middleware for AI endpoints
 - [ ] Create `aiLogs` collection in Convex for monitoring
 
-### 3.2. AI Thread/Channel Summary Implementation (TinyLlama + Ollama)
+### 3.2. AI Thread/Channel Summary Implementation (llama3.2:3b + Ollama)
 - [ ] **Local AI Setup**
   - [ ] Install Ollama on development machine
-  - [ ] Pull TinyLlama model (~637MB download)
+  - [ ] Pull llama3.2:3b model (~637MB download)
   - [ ] Start Ollama server (localhost:11434)
   - [ ] Test Ollama API connectivity and basic generation
 
@@ -160,9 +160,9 @@
 
 ### 3.5. AI System Optimization
 - [ ] **Performance & Reliability**
-  - [ ] Implement TinyLlama health monitoring and auto-restart
+  - [ ] Implement llama3.2:3b health monitoring and auto-restart
   - [ ] Add retry logic for transient Ollama failures
-  - [ ] Optimize context window management for TinyLlama
+  - [ ] Optimize context window management for llama3.2:3b
   - [ ] Create AI service health monitoring dashboard
 
 - [ ] **Error Handling & Fallbacks**
@@ -183,7 +183,7 @@
 
 ### 4.1. AI Features Testing
 - [ ] Unit tests for AI prompt generation and response parsing
-- [ ] Integration tests for TinyLlama connectivity and responses
+- [ ] Integration tests for llama3.2:3b connectivity and responses
 - [ ] Load testing with multiple concurrent AI requests
 - [ ] Context overflow and message limit testing
 - [ ] Rate limiting and caching validation

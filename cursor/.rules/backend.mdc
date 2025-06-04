@@ -1226,16 +1226,16 @@ Mark Channel Read	supabase.from("user_channel_reads").upsert({ … }, { onConfli
 Third-Party Integration Guidelines
 At MVP stage, no third-party AI integrations are implemented. Below guidelines apply when adding AI features (Phase 2).
 
-## AI Summary Feature Implementation (Convex + TinyLlama)
+## AI Summary Feature Implementation (Convex + llama3.2:3b)
 
 ### Architecture Overview
 ```
-Frontend (Next.js) → Convex Actions → Local TinyLlama (Ollama) → Structured Summary
+Frontend (Next.js) → Convex Actions → Local llama3.2:3b (Ollama) → Structured Summary
 ```
 
 ### Technology Stack
 - **Backend**: Convex (replaces Supabase for this feature)
-- **AI Engine**: TinyLlama via Ollama (local processing)
+- **AI Engine**: llama3.2:3b via Ollama (local processing)
 - **Data Storage**: Convex built-in database with vector support
 - **Security**: Workspace isolation via Convex's built-in auth
 
@@ -1261,8 +1261,8 @@ summaries: defineTable({
 # Install Ollama
 curl -fsSL https://ollama.ai/install.sh | sh
 
-# Pull TinyLlama model (~637MB)
-ollama pull tinyllama
+# Pull llama3.2:3b model (~637MB)
+ollama pull llama3.2:3b
 
 # Start Ollama server
 ollama serve --host localhost --port 11434
@@ -1289,7 +1289,7 @@ export const generateThreadSummary = action({
     // 3. Build context with user names and timestamps
     const context = await buildSummaryContext(ctx, messages);
     
-    // 4. Call local TinyLlama via HTTP
+    // 4. Call local llama3.2:3b via HTTP
     const summary = await callTinyLlama(context);
     
     // 5. Cache summary in Convex database
@@ -1308,7 +1308,7 @@ export const generateThreadSummary = action({
 });
 ```
 
-### TinyLlama Integration
+### llama3.2:3b Integration
 ```typescript
 // HTTP call to local Ollama server
 const callTinyLlama = async (context: string) => {
@@ -1316,7 +1316,7 @@ const callTinyLlama = async (context: string) => {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'tinyllama',
+      model: 'llama3.2:3b', 
       prompt: buildSummaryPrompt(context),
       stream: false,
       options: {
@@ -1328,7 +1328,7 @@ const callTinyLlama = async (context: string) => {
   });
   
   if (!response.ok) {
-    throw new Error(`TinyLlama API error: ${response.status}`);
+    throw new Error(`llama3.2:3b API error: ${response.status}`);
   }
   
   const result = await response.json();
@@ -1339,12 +1339,12 @@ const callTinyLlama = async (context: string) => {
 ### Security & Workspace Isolation
 - **Convex Auth**: Built-in user authentication and authorization
 - **Workspace Filtering**: All queries automatically filtered by workspaceId
-- **Local Processing**: TinyLlama runs locally, no data leaves your infrastructure
+- **Local Processing**: llama3.2:3b runs locally, no data leaves your infrastructure
 - **Permission Checks**: Verify user membership before processing
 
 ### Error Handling
 ```typescript
-// Fallback when TinyLlama is unavailable
+// Fallback when llama3.2:3b is unavailable
 const generateFallbackSummary = (messages: Message[]) => ({
   summary: "AI summarization temporarily unavailable. Please try again later.",
   participants: extractParticipants(messages),
@@ -1359,7 +1359,7 @@ const generateFallbackSummary = (messages: Message[]) => ({
 - **Message Limits**: Process max 500 messages per summary
 - **Concurrent Requests**: Limit to 2-3 simultaneous summaries
 - **Caching**: Store summaries in Convex for 24 hours
-- **Resource Usage**: TinyLlama requires 2-4GB RAM
+- **Resource Usage**: llama3.2:3b requires 2-4GB RAM
 
 ### Monitoring & Logging
 ```typescript

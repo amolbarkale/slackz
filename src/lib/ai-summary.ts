@@ -31,44 +31,42 @@ const buildSummaryPrompt = (messages: any[], contextType: string) => {
   .map(m => `${m.author}: ${extractTextFromQuillJson(m.body)}`)
   .join('\n');
 
-  return `You are an AI assistant that creates structured summaries of ${contextType} conversations in a Slack-like workspace.
+    return `You are a professional meeting summarizer. Analyze this conversation and create a structured summary.
 
-Conversation Context:
-Participants: ${participants.join(', ')}
-Total Messages: ${messages.length}
-${contextType === 'thread' ? 'Thread' : contextType === 'conversation' ? 'Direct Message' : 'Channel'} Discussion:
+  Participants: ${participants.join(', ')}
+  Total Messages: ${messages.length}
+  ${contextType === 'thread' ? 'Thread' : 'Channel'} Discussion:
+  
+  Conversation:
+  ${messageText}
 
-    ${messageText}
+  Create a summary with exactly this format:
 
-Please create a structured summary with the following sections:
-
-**Participants**: List all participants who contributed to the discussion
-
-**Key Discussion Points**: 
-• Main topics discussed (3-5 bullet points)
+  **Key Discussion Points**:
+• [Most important topic discussed]
+• [Second most important topic]
+• [Third topic if applicable]
 
 **Decisions Made**:
-• Any concrete decisions or agreements reached
+• [Any concrete decisions or write "None identified"]
 
-    **Action Items**:
-• Tasks assigned or next steps identified
-• Include who is responsible if mentioned
+**Action Items**:
+• [Specific tasks with person responsible or write "None identified"]
 
-    **Next Steps**:
-• Planned follow-ups or future actions
+**Next Steps**:
+• [Planned follow-ups or write "None identified"]
 
-Keep the summary concise but comprehensive. Use bullet points for clarity. If no decisions or action items were made, state "None identified" for those sections.`;
+Keep it concise and professional.`;
 };
 
-// Helper function to call TinyLlama
+// Helper function to call llama3.2:3b
 const callTinyLlama = async (prompt: string) => {
   try {
-    console.log('prompt:', prompt)
     const response = await fetch('http://localhost:11434/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'tinyllama',
+        model: 'llama3.2:3b', 
         prompt: prompt,
         stream: false,
        options: {
@@ -79,20 +77,19 @@ const callTinyLlama = async (prompt: string) => {
     });
 
     if (!response.ok) {
-      throw new Error(`TinyLlama API error: ${response.status}`);
+      throw new Error(`llama3.2:3b API error: ${response.status}`);
     }
 
     const result = await response.json();
     return result.response;
-    console.log('result.response:', result.response)
   } catch (error) {
-    console.error('TinyLlama API call failed:', error);
+    console.error('llama3.2:3b API call failed:', error);
     throw new Error('AI service temporarily unavailable');
   }
 };
 
 // Helper function to generate fallback summary
-const generateFallbackSummary = (messages: any[], contextType: string) => {
+const generateFallbackSummary = (messages: any[]) => {
   const participants = Array.from(new Set(messages.map(m => m.author)));
   const timeRange = messages.length > 0 
     ? `${new Date(messages[0].createdAt).toLocaleString()} - ${new Date(messages[messages.length - 1].createdAt).toLocaleString()}`
@@ -136,7 +133,7 @@ export const generateThreadSummary = async (
       return "**Thread Summary**\n\nNo messages found in this thread.";
     }
 
-    // Build prompt and call TinyLlama
+    // Build prompt and call llama3.2:3b
     const prompt = buildSummaryPrompt(messages, 'thread');
     const summary = await callTinyLlama(prompt);
 
@@ -187,7 +184,7 @@ export const generateChannelSummary = async (
       return "**Channel Summary**\n\nNo messages found in this channel.";
     }
 
-    // Build prompt and call TinyLlama
+    // Build prompt and call llama3.2:3b
     const prompt = buildSummaryPrompt(messages, 'channel');
     const summary = await callTinyLlama(prompt);
 
@@ -238,7 +235,7 @@ export const generateConversationSummary = async (
       return "**Conversation Summary**\n\nNo messages found in this conversation.";
     }
 
-    // Build prompt and call TinyLlama
+    // Build prompt and call llama3.2:3b
     const prompt = buildSummaryPrompt(messages, 'conversation');
     const summary = await callTinyLlama(prompt);
 
