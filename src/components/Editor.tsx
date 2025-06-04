@@ -87,66 +87,66 @@ const Editor = ({
   });
 
   // TODO: need to uncomment it once we done with testing of auto suggestion.
-  // useEffect(() => {
-  //   if (toneTimeoutRef.current) {
-  //     clearTimeout(toneTimeoutRef.current);
-  //   }
+  useEffect(() => {
+    if (toneTimeoutRef.current) {
+      clearTimeout(toneTimeoutRef.current);
+    }
 
-  //   if (text.trim().length === 0) {
-  //     setTone(null);
-  //     return;
-  //   }
+    if (text.trim().length === 0) {
+      setTone(null);
+      return;
+    }
 
-  //   toneTimeoutRef.current = setTimeout(async () => {
-  //     setLoadingTone(true);
-  //     try {
-  //       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
+    toneTimeoutRef.current = setTimeout(async () => {
+      setLoadingTone(true);
+      try {
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-001" });
 
-  //       const systemPrompt = `
-  //           You are a Tone & Impact Analyzer. 
-  //           Given the user's draft message, classify its tone as one of: "aggressive", "weak", "confusing", "neutral", or "friendly".
-  //           Then classify its impact as one of: "low-impact", "medium-impact", or "high-impact".
-  //           Return ONLY this JSON:
-  //           { "tone": "<tone>", "impact": "<impact>" }
-  //                   `.trim();
+        const systemPrompt = `
+            You are a Tone & Impact Analyzer. 
+            Given the user's draft message, classify its tone as one of: "aggressive", "weak", "confusing", "neutral", or "friendly".
+            Then classify its impact as one of: "low-impact", "medium-impact", or "high-impact".
+            Return ONLY this JSON:
+            { "tone": "<tone>", "impact": "<impact>" }
+                    `.trim();
 
-  //       const userPrompt = `Message: """${text.trim()}"""`;
+        const userPrompt = `Message: """${text.trim()}"""`;
 
-  //       const prompt = `${systemPrompt}\n\n${userPrompt}`
+        const prompt = `${systemPrompt}\n\n${userPrompt}`
 
-  //       const result = await model.generateContent(prompt);
+        const result = await model.generateContent(prompt);
 
-  //       let raw = result.response.text();
-  //       raw = raw.replace(/```json\s*/, "").replace(/```/g, "").trim();
-  //       console.log('raw:', raw)
+        let raw = result.response.text();
+        raw = raw.replace(/```json\s*/, "").replace(/```/g, "").trim();
+        console.log('raw:', raw)
 
-  //       let parsed: { tone: string; impact: string } | null = null;
-  //       try {
-  //         parsed = JSON.parse(raw);
-  //         console.log('parsed:', parsed)
-  //       } catch {
-  //         console.warn("Tone analysis returned invalid JSON:", raw);
-  //       }
+        let parsed: { tone: string; impact: string } | null = null;
+        try {
+          parsed = JSON.parse(raw);
+          console.log('parsed:', parsed)
+        } catch {
+          console.warn("Tone analysis returned invalid JSON:", raw);
+        }
 
-  //       if (parsed && parsed.tone && parsed.impact) {
-  //         setTone(`${capitalizeFirst(parsed.tone)}, ${capitalizeFirst(parsed.impact)}`);
-  //       } else {
-  //         setTone(null);
-  //       }
-  //     } catch (err) {
-  //       console.error("Error fetching tone analysis:", err);
-  //       setTone(null);
-  //     } finally {
-  //       setLoadingTone(false);
-  //     }
-  //   }, 500);
+        if (parsed && parsed.tone && parsed.impact) {
+          setTone(`${capitalizeFirst(parsed.tone)}, ${capitalizeFirst(parsed.impact)}`);
+        } else {
+          setTone(null);
+        }
+      } catch (err) {
+        console.error("Error fetching tone analysis:", err);
+        setTone(null);
+      } finally {
+        setLoadingTone(false);
+      }
+    }, 500);
 
-  //   return () => {
-  //     if (toneTimeoutRef.current) {
-  //       clearTimeout(toneTimeoutRef.current);
-  //     }
-  //   };
-  // }, [text]);
+    return () => {
+      if (toneTimeoutRef.current) {
+        clearTimeout(toneTimeoutRef.current);
+      }
+    };
+  }, [text]);
 
   useEffect(() => {
     if (!containerRef.current) return;
