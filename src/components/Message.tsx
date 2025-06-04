@@ -1,8 +1,6 @@
 import dayjs, { Dayjs } from "dayjs";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
-import { useState } from "react";
-import { useConvex } from "convex/react";
 
 import { useRemoveMessage } from "@/features/messages/api/useRemoveMessage";
 import { useUpdateMessage } from "@/features/messages/api/useUpdateMessage";
@@ -94,7 +92,6 @@ export const Message = ({
   const workspaceId = useWorkspaceId();
   const hookChannelId = useChannelId();
   const channelId = propChannelId || hookChannelId; // Use prop if available, otherwise hook
-  const convex = useConvex();
   
   const updateMessage = useUpdateMessage();
   const removeMessage = useRemoveMessage();

@@ -1,4 +1,4 @@
-import { X, Loader, FileText } from "lucide-react";
+import { Loader, FileText } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";

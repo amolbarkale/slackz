@@ -63,13 +63,13 @@ export const aggregateMessages = query({
     const enrichedMessages = await Promise.all(
       messages.map(async (message) => {
         const member = await ctx.db.get(message.memberId);
-        const user = member ? await ctx.db.get(member.userId) : null;
+        const user = member && (member as any).userId ? await ctx.db.get((member as any).userId) : null;
         
         return {
           id: message._id,
           body: message.body,
           createdAt: message._creationTime,
-          author: user?.name || "Unknown User",
+          author: user && (user as any).name ? (user as any).name : "Unknown User",
           memberId: message.memberId,
         };
       })

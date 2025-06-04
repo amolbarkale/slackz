@@ -159,7 +159,7 @@ export const generateThreadSummary = async (
         limit: 500,
       });
       
-      return generateFallbackSummary(messages, 'thread');
+      return generateFallbackSummary(messages);
     } catch {
       return "**Error**: Unable to generate summary. Please try again later.";
     }
@@ -210,7 +210,7 @@ export const generateChannelSummary = async (
         limit: 500,
       });
       
-      return generateFallbackSummary(messages, 'channel');
+      return generateFallbackSummary(messages);
     } catch {
       return "**Error**: Unable to generate summary. Please try again later.";
     }
@@ -261,7 +261,7 @@ export const generateConversationSummary = async (
         limit: 500,
       });
       
-      return generateFallbackSummary(messages, 'conversation');
+      return generateFallbackSummary(messages);
     } catch {
       return "**Error**: Unable to generate summary. Please try again later.";
     }
